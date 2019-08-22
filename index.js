@@ -104,7 +104,7 @@ const questions = [
                     karma: 15,
                     workLifeBalance: 0,
                 },
-                reaction: "kek https://www.youtube.com/watch?v=evL_GkWBb0c",
+                reaction: "https://www.youtube.com/watch?v=y6UTMaVgm0A",
             }
         }
     }
