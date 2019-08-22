@@ -41,7 +41,7 @@ Object.keys(job).forEach((name) => {
 const questions = [
     {
         slug: "job",
-        text: "Где работаешь, пёс?",
+        text: `Привет! Это квест про блаблабла. Погнали.\nЧтобы начать, выбери свой основной профиль:`,
         filter: {},
         asked: 0,
         answers: job_answers
@@ -137,8 +137,9 @@ const getRandomQuestion = (req) => {
     return questions.slice(1)[Math.floor(Math.random() * (questions.length - 1))];
 }
 
-const select_next_question = (ctx) => {
+const select_next_question = (ctx, current_question) => {
     const allowableQestions = questions.slice(1).filter(question => {
+        if (question.slug == current_question.slug) { return false }
         if (ctx.state.user.asked.indexOf(question.slug) >= 0) { return false }
 
         return Object.entries(question.filter).every(([state_name, value]) => {
@@ -150,60 +151,89 @@ const select_next_question = (ctx) => {
             if (state_name == 'experience') { result = value[0] <= ctx.state.user.experience && ctx.state.user.experience < value[1] }
             if (state_name == 'workLifeBalance') { result = value[0] <= ctx.state.user.workLifeBalance && ctx.state.user.workLifeBalance < value[1] }
 
-            console.log(question.slug, 'state_name', state_name, ctx.state.user[state_name], value, result)
-            return result
+            return result;
         })
     });
 
-    console.log(allowableQestions.map((question) => { return question.slug }))
-
     if (!allowableQestions.length) {
-        return
+        return;
     }
 
     return getRandomQuestion(allowableQestions);
 };
 
+const names = {
+    experience: "Стаж",
+    level: "Опыт",
+    job: "Профессия",
+    karma: "Карма",
+    workLifeBalance: "Баланс работы и личной жизни",
+}
+
+const show_status = (asnwer) => {
+    let text = "";
+    Object.entries(asnwer.stats).forEach(([key, value]) => {
+        if (!isNaN(value) && value > 0) {
+            text += names[key] + ": +" + value
+        }
+        else {
+            text += names[key] + ": " + value
+        }
+        text += '\n'
+    })
+    return text
+}
+
 questions.map((question) => {
     calculator.on(question.slug, (ctx) => {
         db.serialize(() => {
             db.get("select stats from users where user_id = ?", [ctx.from.id], (err, row) => {
+                if (err) {
+                    return
+                }
                 ctx.state.user = JSON.parse(row.stats);
-                console.log('reply pressed', ctx.state.lol)
+
+                if (ctx.state.user.asked.indexOf(question.slug) >= 0) { return }
+
                 const user_id = ctx.from.id;
 
                 const answer = question.answers[ctx.state.key];
                 Object.entries(answer.stats).forEach(([key, value]) => {
-                    console.log(ctx.state.user)
                     if (key == 'job') { ctx.state.user[key] = value; return }
 
                     ctx.state.user[key] += value;
                     if (ctx.state.user[key] > 100) { ctx.state.user[key] = 100 }
                     if (ctx.state.user[key] < 0) { ctx.state.user[key] = 0 }
-                })
+                });
+                ctx.state.user.asked.push(question.slug);
+                const next_question = select_next_question(ctx, question)
 
-                // save to db current user state and what question was asked
-
-                const next_question = select_next_question(ctx)
-
-                if (!next_question) {
-                    ctx.editMessageText(answer.reaction)
-                    ctx.reply("КОНЕЦ")
-                    return;
-                }
-
-                ctx.state.user.asked.push(next_question.slug);
                 db.run("update users set stats = ? where user_id = ?", [JSON.stringify(ctx.state.user), ctx.from.id], () => {
+                    if (!next_question) {
+                        ctx.reply(show_status(answer)).then(() => {
+                            ctx.editMessageText(answer.reaction)
+                            ctx.reply("КОНЕЦ")
+                        })
+
+                        return;
+                    }
+
                     ctx.editMessageText(answer.reaction).then(() => {
 
                         if (answer.reaction_image) {
                             ctx.replyWithPhoto({ source: fs.createReadStream(answer.reaction_image) })
                                 .then(() => {
-                                    ask_question(ctx, next_question)
+                                    ctx.reply(show_status(answer)).then(() => {
+                                        ask_question(ctx, next_question)
+
+                                    })
+
                                 })
                             return
                         }
-                        ask_question(ctx, next_question)
+                        ctx.reply(show_status(answer)).then(() => {
+                            ask_question(ctx, next_question)
+                        })
                     })
                 })
             })
@@ -213,12 +243,10 @@ questions.map((question) => {
 });
 
 const ask_question = (ctx, question) => {
-    // ctx.state.user.asked.push(question.slug)
     let buttons = Object.keys(question.answers).map((key) => {
         const asnwer = question.answers[key];
         return Markup.callbackButton(asnwer.text, question.slug + ":" + key)
     })
-
     ctx.reply(question.text, Markup.inlineKeyboard(buttons, { columns: 1 })
         .oneTime()
         .resize()
@@ -226,7 +254,7 @@ const ask_question = (ctx, question) => {
     )
 };
 
-bot.on('callback_query', calculator)
+bot.on('callback_query', calculator);
 
 bot.start((ctx) => {
     db.serialize(() => {
@@ -235,10 +263,7 @@ bot.start((ctx) => {
         stmt.run([ctx.from.id, JSON.stringify(ctx.from), JSON.stringify(defaultState)])
         db.get("select stats, previous_games from users where user_id = ?", [ctx.from.id], (err, row) => {
             ctx.state.user = JSON.parse(row.stats);
-            console.log(ctx.state.user)
-            console.log('asked', ctx.state.user.asked.length)
             if (ctx.state.user.asked.length) {
-                console.log('reset game')
                 const previous_game = JSON.parse(row.stats);
                 const previous_games = JSON.parse(row.previous_games);
                 previous_games.push(previous_game)
@@ -252,7 +277,6 @@ bot.start((ctx) => {
             }
         })
     })
-    // users.push(ctx.from.user_id).push(ctx.from)
 });
 
 bot.launch();
