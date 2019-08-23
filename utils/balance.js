@@ -1,10 +1,10 @@
 
 export const balance = {
     perfect: 1,
-    fine: 0.6,
-    satisfactory: 0.4,
-    unsatisfactorily: 0.2,
-    bad: 0
+    fine: 0.8,
+    satisfactory: 0.6,
+    unsatisfactory: 0.4,
+    bad: 0.2
 }
 
 export default balance;

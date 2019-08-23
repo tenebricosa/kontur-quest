@@ -1,7 +1,7 @@
 export const level = {
-    junior: 0,
-    middle: 0.33,
-    senior: 0.67,
+    junior: 0.25,
+    middle: 0.50,
+    senior: 0.75,
     superstar: 1,
 }
 
