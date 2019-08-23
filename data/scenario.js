@@ -1,36 +1,22 @@
-import { job, isDeveloper } from '../utils/job'
-
-function up(number, coefficient, limit = 1) {
-    return Math.min(number * (1 + coefficient), limit)
-}
-
-function down(number, coefficient, limit = 0) {
-    return Math.max(number * (1 - coefficient), limit)
-}
-
-function moreDays(stats) {
-    return {
-        days: stats.days + (32 + Math.random() * 256)
-    }
-}
-
-function moreKarma(stats) {
-    return {
-        karma: up(stats.karma, 0.05)
-    }
-}
-
-function muchMoreKarma(stats) {
-    return {
-        karma: up(stats.karma, 0.10)
-    }
-}
-
-function lessBalance(stats) {
-    return {
-        balance: down(stats.balance, 0.10)
-    }
-}
+import {
+    isDeveloper,
+    isManager,
+    job,
+} from '../utils/job'
+import level from '../utils/level'
+import balance from '../utils/balance'
+import {
+    merge,
+    lessBalance,
+    lessKarma,
+    moreBalance,
+    moreKarma,
+    moreLevel,
+    muchLessBalance,
+    muchMoreBalance,
+    muchMoreKarma,
+    muchMoreLevel,
+} from '../utils/modifiers'
 
 let job_answers = {}
 
@@ -76,20 +62,5 @@ const questions = [
         }
     }
 ]
-
-function merge(stats, modifiers = []) {
-    const newStats = !Array.isArray(modifiers)
-        ? modifiers
-        : modifiers.reduce((stats, modifier) => ({
-            ...stats,
-            ...modifier(stats)
-        }), stats)
-
-    return {
-        ...stats,
-        ...newStats,
-        ...moreDays(stats),
-    }
-}
 
 export default questions
