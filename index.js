@@ -5,7 +5,7 @@ const session = require('telegraf/session')
 const Router = require('telegraf/router')
 const SocksProxyAgent = require('socks-proxy-agent');
 const Markup = require('telegraf/markup');
-import job from './utils/job.js';
+import questions from './data/scenario'
 import level from './utils/level.js';
 
 const TELEGRAM_TOKEN = '757648727:AAHFbd0W5kjWsJ84TQeVnngtYzOc3PjuiHU';
@@ -24,96 +24,12 @@ const bot = new Telegraf(TELEGRAM_TOKEN, {
     }
 });
 bot.use(session({ ttl: 10 }))
-let job_answers = {}
-
-Object.keys(job).forEach((name) => {
-
-    job_answers[name] = {
-        text: job[name],
-        reaction: "Мы ололо",
-        stats: {
-            job: name
-        }
-    }
-});
-
-const questions = [
-    {
-        slug: "job",
-        text: `Привет! Это квест про блаблабла. Погнали.\nЧтобы начать, выбери свой основной профиль:`,
-        filter: {},
-        asked: 0,
-        answers: job_answers
-    },
-    {
-        slug: "hello",
-        text: "hello how are you?",
-        filter: {
-            experience: [0, 100],
-        },
-        asked: 0,
-        answers: {
-            "good": {
-                text: "Good",
-                stats:
-                {
-                    experience: +1,
-                    level: +1,
-                    karma: +3,
-                    workLifeBalance: +3
-                },
-                reaction: "Ты хорош"
-            },
-            "bad": {
-                text: "Bad",
-                stats: {
-                    experience: +3,
-                    level: +3,
-                    karma: -4,
-                    workLifeBalance: +0,
-                },
-                reaction: 'Сэд бад тру'
-            }
-        }
-    },
-    {
-        slug: "bootcamp",
-        text: "Как все новички, ты попал в Буткамп. Тебя ждут две недели обучения и несколько стажировок, чтобы выбрать наиболее подходящую команду...",
-        filter: {
-            level: [level.junior, level.middle],
-            job: [job.backend, job.datascientist, job.frontend]
-        },
-        answers: {
-            "one": {
-                text: "Пройти одну стажировку",
-                stats: {
-                    experience: +21,
-                    level: 0,
-                    karma: 5,
-                    workLifeBalance: 0
-                },
-                reaction: "lol",
-                reaction_image: "./media/some.jpg"
-            },
-            "three": {
-                text: "Пройти три стажировки",
-                stats: {
-                    experience: +63,
-                    level: 0,
-                    karma: 15,
-                    workLifeBalance: 0,
-                },
-                reaction: "https://www.youtube.com/watch?v=y6UTMaVgm0A",
-            }
-        }
-    }
-];
 
 const defaultState = {
     days: 1,
     level: level.junior,
     job: null,
-    karma: 42,
+    karma: 0.5,
     balance: 0.5,
     asked: []
 }
@@ -141,17 +57,7 @@ const select_next_question = (ctx, current_question) => {
         if (question.slug == current_question.slug) { return false }
         if (ctx.state.user.asked.indexOf(question.slug) >= 0) { return false }
 
-        return Object.entries(question.filter).every(([state_name, value]) => {
-            let result;
-
-            if (state_name == 'job') { result = value.indexOf(job[ctx.state.user.job]) >= 0 }
-            if (state_name == 'level') { result = value.indexOf(ctx.state.user.level) >= 0 }
-            if (state_name == 'karma') { result = value[0] <= ctx.state.user.karma && ctx.state.user.karma < value[1] }
-            if (state_name == 'experience') { result = value[0] <= ctx.state.user.experience && ctx.state.user.experience < value[1] }
-            if (state_name == 'workLifeBalance') { result = value[0] <= ctx.state.user.workLifeBalance && ctx.state.user.workLifeBalance < value[1] }
-
-            return result;
-        })
+        return question.filter === undefined || question.filter(ctx.state.user)
     });
 
     if (!allowableQestions.length) {
@@ -169,9 +75,10 @@ const names = {
     balance: "Баланс работы и личной жизни",
 }
 
-const show_status = (asnwer) => {
+const show_status = stats => {
     let text = "";
-    Object.entries(asnwer.stats).forEach(([key, value]) => {
+
+    Object.entries(stats).forEach(([key, value]) => {
         if (!isNaN(value) && value > 0) {
             text += names[key] + ": +" + value
         }
@@ -190,6 +97,7 @@ questions.map((question) => {
                 if (err) {
                     return
                 }
+
                 ctx.state.user = JSON.parse(row.stats);
 
                 if (ctx.state.user.asked.indexOf(question.slug) >= 0) { return }
@@ -197,19 +105,16 @@ questions.map((question) => {
                 const user_id = ctx.from.id;
 
                 const answer = question.answers[ctx.state.key];
-                Object.entries(answer.stats).forEach(([key, value]) => {
-                    if (key == 'job') { ctx.state.user[key] = value; return }
 
-                    ctx.state.user[key] += value;
-                    if (ctx.state.user[key] > 100) { ctx.state.user[key] = 100 }
-                    if (ctx.state.user[key] < 0) { ctx.state.user[key] = 0 }
-                });
+                if (answer.stats !== undefined) {
+                    ctx.state.user = answer.stats(ctx.state.user)
+                }
                 ctx.state.user.asked.push(question.slug);
                 const next_question = select_next_question(ctx, question)
 
                 db.run("update users set stats = ? where user_id = ?", [JSON.stringify(ctx.state.user), ctx.from.id], () => {
                     if (!next_question) {
-                        ctx.reply(show_status(answer)).then(() => {
+                        ctx.reply(show_status(ctx.state.user)).then(() => {
                             ctx.editMessageText(answer.reaction)
                             ctx.reply("КОНЕЦ")
                         })
@@ -222,7 +127,7 @@ questions.map((question) => {
                         if (answer.reaction_image) {
                             ctx.replyWithPhoto({ source: fs.createReadStream(answer.reaction_image) })
                                 .then(() => {
-                                    ctx.reply(show_status(answer)).then(() => {
+                                    ctx.reply(show_status(ctx.state.user)).then(() => {
                                         ask_question(ctx, next_question)
 
                                     })
@@ -230,7 +135,7 @@ questions.map((question) => {
                                 })
                             return
                         }
-                        ctx.reply(show_status(answer)).then(() => {
+                        ctx.reply(show_status(ctx.state.user)).then(() => {
                             ask_question(ctx, next_question)
                         })
                     })

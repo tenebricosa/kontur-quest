@@ -10,4 +10,15 @@ export const job = {
     productManager: 'менеджер продукта'
 }
 
+const devJobs = [
+    job.backend,
+    job.frontend,
+    job.datascientist,
+    job.mobile
+]
+
+export function isDeveloper(job) {
+    return devJobs.indexOf(job) !== -1
+}
+
 export default job;
