@@ -10,7 +10,7 @@ function down(number, coefficient, limit = 0) {
 
 function moreDays(stats) {
     return {
-        days: stats.days + 21
+        days: stats.days + (32 + Math.random() * 256)
     }
 }
 
@@ -87,8 +87,8 @@ function merge(stats, modifiers = []) {
 
     return {
         ...stats,
+        ...newStats,
         ...moreDays(stats),
-        ...newStats
     }
 }
 
