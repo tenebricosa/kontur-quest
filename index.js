@@ -48,7 +48,7 @@ const calculator = new Router(({ callbackQuery }) => {
     }
 });
 
-const getRandomQuestion = (req) => {
+const getRandomQuestion = questions => {
     return questions.slice(1)[Math.floor(Math.random() * (questions.length - 1))];
 }
 
