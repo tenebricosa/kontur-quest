@@ -3,11 +3,11 @@ export const job = {
     frontend: 'frontend-разработчик',
     datascientist: 'датасаентист',
     mobile: 'мобильный разработчик',
-    analyst: 'аналитик',
+    qa: 'тестировщик',
     designer: 'дизайнер',
-    usability: 'юзабилист',
-    teamManager: 'менеджер команды',
-    productManager: 'менеджер продукта'
+    teamManager: 'менеджер',
+    student: 'студент',
+    unknown: 'кто-то другой',
 }
 
 const devJobs = [
@@ -19,6 +19,14 @@ const devJobs = [
 
 export function isDeveloper(job) {
     return devJobs.indexOf(job) !== -1
+}
+
+const managerJobs = [
+    job.teamManager,
+]
+
+export function isManager(job) {
+    return managerJobs.indexOf(job) !== -1
 }
 
 export default job;
