@@ -110,7 +110,7 @@ const questions = [
 ];
 
 const defaultState = {
-    experience: 1,
+    days: 1,
     level: level.junior,
     job: null,
     karma: 42,
@@ -162,7 +162,7 @@ const select_next_question = (ctx, current_question) => {
 };
 
 const names = {
-    experience: "Стаж",
+    days: "Стаж",
     level: "Опыт",
     job: "Профессия",
     karma: "Карма",
