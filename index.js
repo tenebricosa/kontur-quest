@@ -7,7 +7,6 @@ const SocksProxyAgent = require('socks-proxy-agent');
 const Markup = require('telegraf/markup');
 import job from './utils/job.js';
 import level from './utils/level.js';
-import workLifeBalance from './utils/workLifeBalance.js';
 
 const TELEGRAM_TOKEN = '757648727:AAHFbd0W5kjWsJ84TQeVnngtYzOc3PjuiHU';
 const PROXY = 'socks://naumen:gp_is_the_best_department@g-sh.tech:1080';
@@ -115,7 +114,7 @@ const defaultState = {
     level: level.junior,
     job: null,
     karma: 42,
-    workLifeBalance: 0,
+    balance: 0.5,
     asked: []
 }
 
@@ -167,7 +166,7 @@ const names = {
     level: "Опыт",
     job: "Профессия",
     karma: "Карма",
-    workLifeBalance: "Баланс работы и личной жизни",
+    balance: "Баланс работы и личной жизни",
 }
 
 const show_status = (asnwer) => {
