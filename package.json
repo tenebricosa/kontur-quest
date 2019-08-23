@@ -11,10 +11,13 @@
         "sqlite3": "^4.1.0",
         "telegraf": "^3.32.0"
     },
-    "devDependencies": {},
+    "devDependencies": {
+        "nodemon": "^1.19.1"
+    },
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "start": "node -r esm index.js"
+        "start": "node -r esm index.js",
+        "watch": "nodemon --exec npm start"
     },
     "author": "tenebricosa",
     "license": "ISC"
