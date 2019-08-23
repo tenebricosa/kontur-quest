@@ -151,7 +151,7 @@ const ask_question = (ctx, question) => {
         const asnwer = question.answers[key];
         return Markup.callbackButton(asnwer.text, question.slug + ":" + key)
     })
-    ctx.reply(question.text, Markup.inlineKeyboard(buttons, { columns: 1 })
+    ctx.replyWithMarkdown(question.text, Markup.inlineKeyboard(buttons, { columns: 1 })
         .oneTime()
         .resize()
         .extra()
