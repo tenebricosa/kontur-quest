@@ -8,7 +8,7 @@ function down(number, coefficient, limit = 0) {
 
 function moreDays(stats) {
     return {
-        days: stats.days + (32 + Math.random() * 256)
+        days: Math.floor(stats.days + (32 + Math.random() * 256))
     }
 }
 
