@@ -1,3 +1,4 @@
+import { renderStatus } from './utils/status'
 const fs = require('fs')
 
 const Telegraf = require('telegraf');
@@ -67,29 +68,6 @@ const select_next_question = (ctx, current_question) => {
     return getRandomQuestion(allowableQestions);
 };
 
-const names = {
-    days: "Стаж",
-    level: "Опыт",
-    job: "Профессия",
-    karma: "Карма",
-    balance: "Баланс работы и личной жизни",
-}
-
-const show_status = stats => {
-    let text = "";
-
-    Object.entries(stats).forEach(([key, value]) => {
-        if (!isNaN(value) && value > 0) {
-            text += names[key] + ": +" + value
-        }
-        else {
-            text += names[key] + ": " + value
-        }
-        text += '\n'
-    })
-    return text
-}
-
 questions.map((question) => {
     calculator.on(question.slug, (ctx) => {
         db.serialize(() => {
@@ -114,7 +92,7 @@ questions.map((question) => {
 
                 db.run("update users set stats = ? where user_id = ?", [JSON.stringify(ctx.state.user), ctx.from.id], () => {
                     if (!next_question) {
-                        ctx.reply(show_status(ctx.state.user)).then(() => {
+                        ctx.replyWithMarkdown(renderStatus(ctx.state.user)).then(() => {
                             ctx.editMessageText(answer.reaction)
                             ctx.reply("КОНЕЦ")
                         })
@@ -127,7 +105,7 @@ questions.map((question) => {
                         if (answer.reaction_image) {
                             ctx.replyWithPhoto({ source: fs.createReadStream(answer.reaction_image) })
                                 .then(() => {
-                                    ctx.reply(show_status(ctx.state.user)).then(() => {
+                                    ctx.replyWithMarkdown(renderStatus(ctx.state.user)).then(() => {
                                         ask_question(ctx, next_question)
 
                                     })
@@ -135,7 +113,7 @@ questions.map((question) => {
                                 })
                             return
                         }
-                        ctx.reply(show_status(ctx.state.user)).then(() => {
+                        ctx.replyWithMarkdown(renderStatus(ctx.state.user)).then(() => {
                             ask_question(ctx, next_question)
                         })
                     })
