@@ -80,8 +80,6 @@ questions.map((question) => {
 
                 if (ctx.state.user.asked.indexOf(question.slug) >= 0) { return }
 
-                const user_id = ctx.from.id;
-
                 const answer = question.answers[ctx.state.key];
 
                 if (answer.stats !== undefined) {
