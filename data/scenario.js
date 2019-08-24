@@ -31,7 +31,7 @@ Object.keys(job).forEach((name) => {
     }
 })
 
-const questions = [
+export const questions = [
     {
         slug: "job",
         title: "Контуровец",
@@ -557,4 +557,4 @@ const questions = [
     },
 ]
 
-export default questions
+export const finalMessage = "Вот и всё, квест окончен 😎"

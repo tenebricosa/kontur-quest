@@ -6,7 +6,7 @@ const session = require('telegraf/session')
 const Router = require('telegraf/router')
 const SocksProxyAgent = require('socks-proxy-agent');
 const Markup = require('telegraf/markup');
-import questions from './data/scenario'
+import { questions, finalMessage } from './data/scenario'
 import level from './utils/level.js';
 
 const TELEGRAM_TOKEN = '757648727:AAHFbd0W5kjWsJ84TQeVnngtYzOc3PjuiHU';
@@ -93,15 +93,14 @@ questions.map((question) => {
                 db.run("update users set stats = ? where user_id = ?", [JSON.stringify(ctx.state.user), ctx.from.id], () => {
                     if (!next_question) {
                         ctx.replyWithMarkdown(renderStatus(ctx.state.user)).then(() => {
-                            ctx.editMessageText(answer.reaction)
-                            ctx.reply("КОНЕЦ")
+                            ctx.replyWithMarkdown(answer.reaction)
+                            ctx.replyWithMarkdown(finalMessage)
                         })
 
                         return;
                     }
 
-                    ctx.editMessageText(answer.reaction).then(() => {
-
+                    ctx.replyWithMarkdown(answer.reaction).then(() => {
                         if (answer.reaction_image) {
                             ctx.replyWithPhoto({ source: fs.createReadStream(answer.reaction_image) })
                                 .then(() => {
